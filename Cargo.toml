@@ -1,0 +1,12 @@
+[package]
+name = "rust_racer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.28.1"
+epi = "0.17.0"
+font-kit = "0.13.2"
+minifb = "0.27.0"
+polars = "0.41.3"
+raqote = "0.8.4"
