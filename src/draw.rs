@@ -1,3 +1,4 @@
+use crate::load_map::Map;
 use minifb::{KeyRepeat, Window, WindowOptions};
 use raqote::{DrawOptions, DrawTarget, PathBuilder, SolidSource, Source};
 
@@ -72,21 +73,50 @@ impl Canvas {
         self.dt.clear(get_background_color());
     }
 
-    pub fn draw_object(
+    pub fn draw_map(&mut self, map: &Map) {
+        let content = &map.content;
+
+        let object_height = HEIGHT as f32 / content.len() as f32;
+        let object_width = WIDTH as f32 / content[0].len() as f32;
+        let coordinate_step_y = 1.0 / content.len() as f32;
+        let coordinate_step_x = 1.0 / content[0].len() as f32;
+
+        for i in 0..content.len() {
+            for j in 0..content[i].len() {
+                if content[j][i] != b'-' {
+                    let color = get_color_of_map_object(content[j][i]);
+
+                    self.draw_object(
+                        (
+                            i as f32 * coordinate_step_y + coordinate_step_y / 2.0,
+                            j as f32 * coordinate_step_x + coordinate_step_x / 2.0,
+                            0.0,
+                        ),
+                        (object_width, object_height),
+                        color,
+                    )
+                }
+            }
+        }
+    }
+
+    pub fn draw_car(&mut self, (x, y, orientation): (f32, f32, f32), (width, height): (f32, f32)) {
+        self.draw_object((x, y, orientation), (width, height), get_player_color())
+    }
+
+    fn draw_object(
         &mut self,
         (x, y, orientation): (f32, f32, f32),
         (width, height): (f32, f32),
+        color: SolidSource,
     ) {
         let (x_pixel, y_pixel) = relative_position_to_pixel((x, y));
 
         let mut pb = PathBuilder::new();
         pb.rect_rotatable(x_pixel, y_pixel, width, height, orientation);
         let path = pb.finish();
-        self.dt.fill(
-            &path,
-            &Source::Solid(get_player_color()),
-            &DrawOptions::new(),
-        );
+        self.dt
+            .fill(&path, &Source::Solid(color), &DrawOptions::new());
     }
 
     pub fn update_window(&mut self) {
@@ -122,4 +152,13 @@ fn get_player_color() -> SolidSource {
 
 fn relative_position_to_pixel(position: (f32, f32)) -> (f32, f32) {
     (position.0 * WIDTH as f32, position.1 * HEIGHT as f32)
+}
+
+fn get_color_of_map_object(object: u8) -> SolidSource {
+    match object {
+        b't' => SolidSource::from_unpremultiplied_argb(0xff, 0, 0xa0, 0xa0),
+        b'o' => SolidSource::from_unpremultiplied_argb(0xff, 0x0a, 0x0a, 0x20),
+        b's' => SolidSource::from_unpremultiplied_argb(0xff, 0xa0, 0x00, 0x20),
+        _ => SolidSource::from_unpremultiplied_argb(0xff, 0xff, 0xff, 0xff),
+    }
 }
